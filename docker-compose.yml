@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379/0
+      - BOT_MAX_HISTORY_EXCHANGES=5
+      - BOT_MAX_RESPONSE_TOKENS=256
+    depends_on:
+      - redis
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
