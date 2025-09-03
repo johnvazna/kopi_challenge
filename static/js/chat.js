@@ -186,22 +186,25 @@ createApp({
             }
         },
         
-                        removeConversationFromStorage() {
-                    localStorage.removeItem('kopi_challenge_conversation_id');
-                },
+        removeConversationFromStorage() {
+            localStorage.removeItem('kopi_challenge_conversation_id');
+        },
 
-                formatMessage(content) {
-                    return content
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\n/g, '<br>');
-                },
+        formatMessage(content) {
+            if (!content || typeof content !== 'string') {
+                return '';
+            }
+            return content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        },
 
-                formatTime(timestamp) {
-                    return new Date(timestamp).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                },
+        formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
         
         clearAllChats() {
             if (confirm('Are you sure you want to clear all chats? This action cannot be undone.')) {
