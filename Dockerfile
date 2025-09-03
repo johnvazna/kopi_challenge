@@ -20,5 +20,5 @@ COPY static/ ./static/
 # Expose port
 EXPOSE 8000
 
-# Default command
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default command - Railway will override PORT
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "${PORT:-8000}"]

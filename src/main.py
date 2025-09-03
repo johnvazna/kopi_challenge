@@ -52,14 +52,18 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Kopi Challenge API...")
     
     try:
-        redis_host, redis_port, redis_db = parse_redis_url(REDIS_URL)
-        
-        storage = ChatStorage(
-            host=redis_host,
-            port=redis_port,
-            db=redis_db
-        )
-        logger.info(f"Storage initialized at {redis_host}:{redis_port}")
+        # Try to connect to Redis, but don't fail if unavailable
+        try:
+            redis_host, redis_port, redis_db = parse_redis_url(REDIS_URL)
+            storage = ChatStorage(
+                host=redis_host,
+                port=redis_port,
+                db=redis_db
+            )
+            logger.info(f"Storage initialized at {redis_host}:{redis_port}")
+        except Exception as e:
+            logger.warning(f"Redis not available, using in-memory storage: {e}")
+            storage = None
         
         chatbot = DebateChatbot()
         logger.info("Chatbot initialized successfully")
