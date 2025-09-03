@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -33,7 +32,7 @@ class ChatMessage(BaseModel):
 
 class ChatResponse(BaseModel):
     """Model for chat responses"""
-    conversation_id: str = Field(..., description="Unique conversation identifier", example="550e8400-e29b-41d4-a716-446655440000")
+    conversation_id: str = Field(..., description="Unique conversation identifier", json_schema_extra={"example": "550e8400-e29b-41d4-a716-446655440000"})
     message: List[ChatMessage] = Field(..., description="List of recent messages in the conversation")
 
 class ConversationHistory(BaseModel):
@@ -72,7 +71,7 @@ class ErrorResponse(BaseModel):
     """Model for error responses"""
     error: str = Field(..., description="Error description")
     detail: Optional[str] = Field(None, description="Additional error details")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
+    timestamp: datetime = Field(default_factory=datetime.now, description="Error timestamp")
 
 class RootResponse(BaseModel):
     """Model for root endpoint response"""

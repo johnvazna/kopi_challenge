@@ -5,14 +5,15 @@ from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from src.chat_logic import DebateChatbot
 from src.storage import ChatStorage
 from src.models import (
     ChatRequest, ChatResponse, ConversationHistory, PersonalityResponse,
-    HealthResponse, StatsResponse, RootResponse, ErrorResponse
+    HealthResponse, StatsResponse, RootResponse
 )
 
 logging.basicConfig(
@@ -94,6 +95,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# No templates needed for static HTML
+
 def get_storage() -> ChatStorage:
     """Dependency to get storage instance"""
     if storage is None:
@@ -130,6 +135,15 @@ async def root():
             "GET /stats": "Get system statistics"
         }
     )
+
+@app.get("/ui", tags=["UI"])
+async def chat_ui():
+    """
+    Chat UI interface for testing the chatbot.
+    
+    Provides a ChatGPT-style web interface to interact with the debate chatbot.
+    """
+    return FileResponse("templates/chat.html")
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoring"])
 async def health_check():
