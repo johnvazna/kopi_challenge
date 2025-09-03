@@ -26,6 +26,7 @@ PORT = int(os.getenv("PORT", 8000))
 HOST = os.getenv("HOST", "0.0.0.0")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+logger.info(f"REDIS_URL from environment: {REDIS_URL}")
 BOT_MAX_HISTORY_EXCHANGES = int(os.getenv("BOT_MAX_HISTORY_EXCHANGES", 5))
 BOT_MAX_RESPONSE_TOKENS = int(os.getenv("BOT_MAX_RESPONSE_TOKENS", 256))
 
@@ -54,7 +55,9 @@ async def lifespan(app: FastAPI):
     try:
         # Try to connect to Redis, but don't fail if unavailable
         try:
+            logger.info(f"Attempting to connect to Redis with URL: {REDIS_URL}")
             redis_host, redis_port, redis_db = parse_redis_url(REDIS_URL)
+            logger.info(f"Parsed Redis connection: host={redis_host}, port={redis_port}, db={redis_db}")
             
             storage = ChatStorage(
                 host=redis_host,
