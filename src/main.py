@@ -31,7 +31,7 @@ BOT_MAX_HISTORY_EXCHANGES = int(os.getenv("BOT_MAX_HISTORY_EXCHANGES", 5))
 BOT_MAX_RESPONSE_TOKENS = int(os.getenv("BOT_MAX_RESPONSE_TOKENS", 256))
 
 def parse_redis_url(redis_url: str) -> tuple:
-    """Parse Redis URL and return host, port, db"""
+    """Parse Redis URL and return host, port, db, password"""
     try:
         # Add redis:// scheme if missing
         if not redis_url.startswith('redis://'):
@@ -41,13 +41,14 @@ def parse_redis_url(redis_url: str) -> tuple:
         host = parsed.hostname or "localhost"
         port = parsed.port or 6379
         db = int(parsed.path.lstrip('/')) if parsed.path else 0
+        password = parsed.password
         
-        logger.info(f"Parsed URL: scheme={parsed.scheme}, hostname={parsed.hostname}, port={parsed.port}, path={parsed.path}")
+        logger.info(f"Parsed URL: scheme={parsed.scheme}, hostname={parsed.hostname}, port={parsed.port}, path={parsed.path}, password={'***' if password else 'None'}")
         
-        return host, port, db
+        return host, port, db, password
     except Exception as e:
         logger.warning(f"Error parsing REDIS_URL, using defaults: {e}")
-        return "localhost", 6379, 0
+        return "localhost", 6379, 0, None
 
 chatbot = None
 storage = None
@@ -63,13 +64,14 @@ async def lifespan(app: FastAPI):
         # Try to connect to Redis, but don't fail if unavailable
         try:
             logger.info(f"Attempting to connect to Redis with URL: {REDIS_URL}")
-            redis_host, redis_port, redis_db = parse_redis_url(REDIS_URL)
-            logger.info(f"Parsed Redis connection: host={redis_host}, port={redis_port}, db={redis_db}")
+            redis_host, redis_port, redis_db, redis_password = parse_redis_url(REDIS_URL)
+            logger.info(f"Parsed Redis connection: host={redis_host}, port={redis_port}, db={redis_db}, password={'***' if redis_password else 'None'}")
             
             storage = ChatStorage(
                 host=redis_host,
                 port=redis_port,
-                db=redis_db
+                db=redis_db,
+                password=redis_password
             )
             logger.info(f"Storage initialized at {redis_host}:{redis_port}")
         except Exception as e:
