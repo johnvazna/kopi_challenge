@@ -39,8 +39,8 @@ class ChatStorage:
             "conversation_id": conversation_id,
             "topic": topic,
             "stance": stance,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
             "message_count": 0
         }
         
@@ -101,7 +101,7 @@ class ChatStorage:
                 "id": str(uuid.uuid4()),
                 "message": message,
                 "is_user": is_user,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now().isoformat()
             }
             
             messages_key = f"conversation_messages:{conversation_id}"
@@ -121,7 +121,7 @@ class ChatStorage:
             )
             
             meta["message_count"] = len(messages)
-            meta["updated_at"] = datetime.utcnow().isoformat()
+            meta["updated_at"] = datetime.now().isoformat()
             
             self.redis_client.setex(
                 f"conversation_meta:{conversation_id}",
@@ -258,7 +258,7 @@ class ChatStorage:
                 "storage_type": "redis",
                 "ttl_days": 7,
                 "max_history_exchanges": self.max_history_exchanges,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now().isoformat()
             }
         except Exception as e:
             logger.error(f"Error getting statistics: {e}")
@@ -272,7 +272,7 @@ class ChatStorage:
                 return False
             
             meta.update(updates)
-            meta["updated_at"] = datetime.utcnow().isoformat()
+            meta["updated_at"] = datetime.now().isoformat()
             
             self.redis_client.setex(
                 f"conversation_meta:{conversation_id}",
