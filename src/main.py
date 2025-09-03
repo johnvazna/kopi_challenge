@@ -33,10 +33,17 @@ BOT_MAX_RESPONSE_TOKENS = int(os.getenv("BOT_MAX_RESPONSE_TOKENS", 256))
 def parse_redis_url(redis_url: str) -> tuple:
     """Parse Redis URL and return host, port, db"""
     try:
+        # Add redis:// scheme if missing
+        if not redis_url.startswith('redis://'):
+            redis_url = 'redis://' + redis_url
+        
         parsed = urlparse(redis_url)
         host = parsed.hostname or "localhost"
         port = parsed.port or 6379
         db = int(parsed.path.lstrip('/')) if parsed.path else 0
+        
+        logger.info(f"Parsed URL: scheme={parsed.scheme}, hostname={parsed.hostname}, port={parsed.port}, path={parsed.path}")
+        
         return host, port, db
     except Exception as e:
         logger.warning(f"Error parsing REDIS_URL, using defaults: {e}")
