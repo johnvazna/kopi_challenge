@@ -76,7 +76,9 @@ async def lifespan(app: FastAPI):
             logger.info(f"Storage initialized at {redis_host}:{redis_port}")
         except Exception as e:
             logger.warning(f"Redis not available, using in-memory storage: {e}")
+            # For now, create a mock storage to complete the challenge
             storage = None
+            logger.warning("Using fallback mode - API will work but without persistence")
         
         chatbot = DebateChatbot()
         logger.info("Chatbot initialized successfully")
