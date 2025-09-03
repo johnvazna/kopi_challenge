@@ -66,7 +66,7 @@ createApp({
                 const botMessage = {
                     id: Date.now() + 1,
                     role: 'bot',
-                    content: data.message,
+                    content: data.message[data.message.length - 1].message,
                     timestamp: new Date()
                 };
                 

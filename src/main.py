@@ -54,16 +54,12 @@ async def lifespan(app: FastAPI):
     try:
         # Try to connect to Redis, but don't fail if unavailable
         try:
-            # Force Redis Cloud connection for Railway
-            redis_host = "redis-14269.c267.us-east-1-4.ec2.redns.redis-cloud.com"
-            redis_port = 14269
-            redis_db = 0
+            redis_host, redis_port, redis_db = parse_redis_url(REDIS_URL)
             
             storage = ChatStorage(
                 host=redis_host,
                 port=redis_port,
-                db=redis_db,
-                password="5E5OI2j2PRV3MSKmcz7PPGQY6sAmkaYo"
+                db=redis_db
             )
             logger.info(f"Storage initialized at {redis_host}:{redis_port}")
         except Exception as e:
