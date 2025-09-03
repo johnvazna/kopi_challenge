@@ -1,0 +1,230 @@
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            messages: [{
+                id: 1,
+                role: 'bot',
+                content: 'Where should we start?',
+                timestamp: new Date()
+            }],
+            inputMessage: '',
+            currentConversationId: null,
+            isLoading: false,
+            conversationInfo: {},
+            savedConversations: []
+        }
+    },
+    
+    mounted() {
+        this.loadConversationFromStorage();
+        this.scrollToBottom();
+    },
+    
+    methods: {
+        async sendMessage() {
+            if (!this.inputMessage.trim() || this.isLoading) return;
+            
+            const userMessage = {
+                id: Date.now(),
+                role: 'user',
+                content: this.inputMessage.trim(),
+                timestamp: new Date()
+            };
+            
+            this.messages.push(userMessage);
+            this.inputMessage = '';
+            this.isLoading = true;
+            
+            this.scrollToBottom();
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conversation_id: this.currentConversationId,
+                        message: userMessage.content
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!this.currentConversationId) {
+                    this.currentConversationId = data.conversation_id;
+                    this.conversationInfo = data;
+                    this.saveConversationToStorage();
+                }
+                
+                const botMessage = {
+                    id: Date.now() + 1,
+                    role: 'bot',
+                    content: data.message,
+                    timestamp: new Date()
+                };
+                
+                this.messages.push(botMessage);
+                this.scrollToBottom();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessage = {
+                    id: Date.now() + 1,
+                    role: 'bot',
+                    content: 'Sorry, I encountered an error. Please try again.',
+                    timestamp: new Date()
+                };
+                this.messages.push(errorMessage);
+            } finally {
+                this.isLoading = false;
+                this.scrollToBottom();
+            }
+        },
+        
+        handleEnter(event) {
+            if (event.shiftKey) {
+                return;
+            }
+            event.preventDefault();
+            this.sendMessage();
+        },
+        
+        autoResize() {
+            const textarea = this.$refs.messageInput;
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+        },
+        
+        scrollToBottom() {
+            this.$nextTick(() => {
+                const chatArea = document.querySelector('.chat-area');
+                if (chatArea) {
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }
+            });
+        },
+        
+        startNewConversation() {
+            this.messages = [{
+                id: 1,
+                role: 'bot',
+                content: 'Where should we start?',
+                timestamp: new Date()
+            }];
+            this.currentConversationId = null;
+            this.conversationInfo = {};
+            this.inputMessage = '';
+            this.scrollToBottom();
+        },
+        
+        saveConversationToStorage() {
+            if (this.currentConversationId) {
+                localStorage.setItem(`kopi_challenge_conversation_${this.currentConversationId}`, JSON.stringify({
+                    id: this.currentConversationId,
+                    messages: this.messages,
+                    info: this.conversationInfo,
+                    timestamp: new Date()
+                }));
+                
+                const existingConversations = JSON.parse(localStorage.getItem('kopi_challenge_conversations') || '[]');
+                const conversationExists = existingConversations.find(c => c.id === this.currentConversationId);
+                
+                if (!conversationExists) {
+                    existingConversations.push({
+                        id: this.currentConversationId,
+                        title: this.messages[1]?.content.substring(0, 50) + '...' || 'New Chat',
+                        timestamp: new Date()
+                    });
+                    localStorage.setItem('kopi_challenge_conversations', JSON.stringify(existingConversations));
+                    this.savedConversations = existingConversations;
+                }
+            }
+        },
+        
+        loadConversationFromStorage() {
+            const savedConversations = JSON.parse(localStorage.getItem('kopi_challenge_conversations') || '[]');
+            this.savedConversations = savedConversations;
+            
+            if (savedConversations.length > 0) {
+                const lastConversation = savedConversations[savedConversations.length - 1];
+                this.loadConversation(lastConversation.id);
+            }
+        },
+        
+        async loadConversation(conversationId) {
+            try {
+                const response = await fetch(`/chat/${conversationId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.messages = data.message;
+                    this.currentConversationId = conversationId;
+                    this.conversationInfo = data;
+                    this.scrollToBottom();
+                } else {
+                    this.loadConversationFromLocalStorage(conversationId);
+                }
+            } catch (error) {
+                this.loadConversationFromLocalStorage(conversationId);
+            }
+        },
+        
+        loadConversationFromLocalStorage(conversationId) {
+            const savedData = localStorage.getItem(`kopi_challenge_conversation_${conversationId}`);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                this.messages = data.messages;
+                this.currentConversationId = conversationId;
+                this.conversationInfo = data.info;
+                this.scrollToBottom();
+            }
+        },
+        
+                        removeConversationFromStorage() {
+                    localStorage.removeItem('kopi_challenge_conversation_id');
+                },
+
+                formatMessage(content) {
+                    return content
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+                },
+
+                formatTime(timestamp) {
+                    return new Date(timestamp).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                },
+        
+        clearAllChats() {
+            if (confirm('Are you sure you want to clear all chats? This action cannot be undone.')) {
+                this.messages = [{
+                    id: 1,
+                    role: 'bot',
+                    content: 'Where should we start?',
+                    timestamp: new Date()
+                }];
+                this.currentConversationId = null;
+                this.conversationInfo = {};
+                this.savedConversations = [];
+                
+                localStorage.removeItem('kopi_challenge_conversations');
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('kopi_challenge_conversation_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                this.scrollToBottom();
+            }
+        }
+    }
+}).mount('#app');
