@@ -12,8 +12,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
+# Copy source code, templates and static files
 COPY src/ ./src/
+COPY templates/ ./templates/
+COPY static/ ./static/
 
 # Expose port
 EXPOSE 8000
