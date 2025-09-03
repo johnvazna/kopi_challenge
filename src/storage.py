@@ -12,13 +12,14 @@ logger = logging.getLogger(__name__)
 class ChatStorage:
     """Redis-based conversation storage manager"""
     
-    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0):
+    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0, password: str = None):
         """Initialize Redis connection"""
         try:
             self.redis_client = redis.Redis(
                 host=host,
                 port=port,
                 db=db,
+                password=password,
                 decode_responses=True,
                 socket_connect_timeout=5,
                 socket_timeout=5
