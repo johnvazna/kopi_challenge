@@ -11,6 +11,8 @@ import uvicorn
 
 from src.chat_logic import DebateChatbot
 from src.storage import ChatStorage
+from src.memory_storage import InMemoryChatStorage
+from src.ai_service import OllamaAIService
 from src.models import (
     ChatRequest, ChatResponse, ConversationHistory, PersonalityResponse,
     HealthResponse, StatsResponse, RootResponse
@@ -52,11 +54,12 @@ def parse_redis_url(redis_url: str) -> tuple:
 
 chatbot = None
 storage = None
+ai_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle manager"""
-    global chatbot, storage
+    global chatbot, storage, ai_service
     
     logger.info("Starting Kopi Challenge API...")
     
@@ -76,11 +79,16 @@ async def lifespan(app: FastAPI):
             logger.info(f"Storage initialized at {redis_host}:{redis_port}")
         except Exception as e:
             logger.warning(f"Redis not available, using in-memory storage: {e}")
-            # For now, create a mock storage to complete the challenge
-            storage = None
-            logger.warning("Using fallback mode - API will work but without persistence")
+            # Use in-memory storage as fallback
+            storage = InMemoryChatStorage()
+            logger.info("Using in-memory storage fallback - conversations will be lost on restart")
         
-        chatbot = DebateChatbot()
+        # Initialize AI service
+        ai_service = OllamaAIService()
+        logger.info("AI service initialized successfully")
+        
+        # Initialize chatbot with AI service
+        chatbot = DebateChatbot(ai_service=ai_service)
         logger.info("Chatbot initialized successfully")
         
         logger.info(f"API started at {HOST}:{PORT}")
@@ -118,7 +126,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # No templates needed for static HTML
 
-def get_storage() -> ChatStorage:
+def get_storage():
     """Dependency to get storage instance"""
     if storage is None:
         raise HTTPException(status_code=503, detail="Storage not available")

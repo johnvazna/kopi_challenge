@@ -2,16 +2,24 @@ import logging
 import random
 from typing import Dict, List
 
+from .ai_service import OllamaAIService
+
 logger = logging.getLogger(__name__)
 
 class DebateChatbot:
     """
     A chatbot that maintains a consistent stance in debates.
-    Follows a rule-based structure for responses.
+    Uses AI-powered responses while maintaining debate consistency.
     """
     
-    def __init__(self):
-        """Initialize chatbot with debate topics and response structure"""
+    def __init__(self, ai_service: OllamaAIService = None):
+        """Initialize chatbot with debate topics and AI service"""
+        # Initialize AI service
+        self.ai_service = ai_service or OllamaAIService()
+        
+        # Test AI connection
+        if not self.ai_service.test_connection():
+            logger.warning("AI service connection failed, using fallback mode")
         self.debate_topics = {
             "Pineapple belongs on pizza": {
                 "position": "Pro",
@@ -159,35 +167,36 @@ class DebateChatbot:
     
     def generate_reply(self, user_message: str, conversation_history: List[Dict] = None) -> str:
         """
-        Generate a coherent chatbot response based on user message.
-        Returns a string with the structured response.
+        Generate a coherent chatbot response using AI.
+        Returns a string with the AI-generated response.
         """
         try:
             # Handle invalid input
             if user_message is None:
-                return f"Mi sistema de debate está teniendo problemas, pero mi postura sobre **{self.current_topic}** permanece inquebrantable."
+                return f"My debate system is having problems, but my stance on **{self.current_topic}** remains unshakeable."
             
             if not isinstance(user_message, str):
                 user_message = str(user_message)
             
-            normalized_message = user_message.lower().strip()
+            # Get current topic info
+            topic = self.current_topic
+            stance = self.topic_info["position"]
             
-            if self._is_asking_for_clarification(normalized_message):
-                return self._clarify_position()
-            elif self._is_challenging_position(normalized_message):
-                return self._defend_position(user_message)
-            elif self._is_asking_for_evidence(normalized_message):
-                return self._provide_evidence()
-            elif self._is_greeting(normalized_message):
-                return self._greet_and_explain_topic()
-            elif self._is_farewell(normalized_message):
-                return self._say_farewell()
-            else:
-                return self._generate_structured_response(user_message)
+            # Generate AI response
+            ai_response = self.ai_service.generate_response(
+                topic=topic,
+                stance=stance,
+                user_message=user_message,
+                conversation_history=conversation_history,
+                is_initial=False
+            )
+            
+            logger.info(f"Generated AI response for topic: {topic}, stance: {stance}")
+            return ai_response
                 
         except Exception as e:
-            logger.error(f"Error generating response: {e}")
-            return "Mi sistema de debate está teniendo problemas, pero mi postura sobre este tema permanece inquebrantable."
+            logger.error(f"Error generating AI response: {e}")
+            return f"My debate system is having problems, but my stance on **{self.current_topic}** remains unshakeable."
     
     def get_topic_info(self) -> Dict[str, str]:
         """Return current debate topic information"""
@@ -198,52 +207,46 @@ class DebateChatbot:
         }
     
     def generate_initial_response(self) -> str:
-        """Generate bot's initial response explaining topic and stance"""
-        topic = self.current_topic
-        position = self.topic_info["position"]
-        reasons = self.topic_info["reasons"]
-        
-        response = f"Excellent! I have chosen to debate about: **{topic}**\n\n"
-        response += f"My stance is **{position}**. I am completely convinced that:\n\n"
-        
-        for i, reason in enumerate(reasons, 1):
-            response += f"{i}. {reason}\n"
-        
-        response += f"\n{random.choice(self.topic_info['analogies'])}\n\n"
-        response += f"What do you think about {topic.lower()}? Can you give me arguments against it?"
-        
-        return response
+        """Generate bot's initial response using AI"""
+        try:
+            topic = self.current_topic
+            stance = self.topic_info["position"]
+            
+            # Generate AI initial response
+            ai_response = self.ai_service.generate_response(
+                topic=topic,
+                stance=stance,
+                user_message="",  # Empty for initial response
+                conversation_history=None,
+                is_initial=True
+            )
+            
+            logger.info(f"Generated AI initial response for topic: {topic}, stance: {stance}")
+            return ai_response
+            
+        except Exception as e:
+            logger.error(f"Error generating AI initial response: {e}")
+            # Fallback to original method
+            topic = self.current_topic
+            position = self.topic_info["position"]
+            reasons = self.topic_info["reasons"]
+            
+            response = f"Excellent! I have chosen to debate about: **{topic}**\n\n"
+            response += f"My stance is **{position}**. I am completely convinced that:\n\n"
+            
+            for i, reason in enumerate(reasons, 1):
+                response += f"{i}. {reason}\n"
+            
+            response += f"\n{random.choice(self.topic_info['analogies'])}\n\n"
+            response += f"What do you think about {topic.lower()}? Can you give me arguments against it?"
+            
+            return response
     
     def generate_response(self, user_message: str, conversation_history: List[Dict] = None) -> str:
         """
-        Generate a chatbot response following the rule-based structure.
+        Generate a chatbot response using AI (alias for generate_reply for compatibility).
         """
-        try:
-            # Handle invalid input
-            if user_message is None:
-                return f"Mi sistema de debate está teniendo problemas, pero mi postura sobre **{self.current_topic}** permanece inquebrantable."
-            
-            if not isinstance(user_message, str):
-                user_message = str(user_message)
-            
-            normalized_message = user_message.lower().strip()
-            
-            if self._is_asking_for_clarification(normalized_message):
-                return self._clarify_position()
-            elif self._is_challenging_position(normalized_message):
-                return self._defend_position(user_message)
-            elif self._is_asking_for_evidence(normalized_message):
-                return self._provide_evidence()
-            elif self._is_greeting(normalized_message):
-                return self._greet_and_explain_topic()
-            elif self._is_farewell(normalized_message):
-                return self._say_farewell()
-            else:
-                return self._generate_structured_response(user_message)
-                
-        except Exception as e:
-            logger.error(f"Error generating response: {e}")
-            return f"My debate system is having problems, but my stance on **{self.current_topic}** remains unshakeable."
+        return self.generate_reply(user_message, conversation_history)
     
     def _is_asking_for_clarification(self, message: str) -> bool:
         """Detect if user is asking for clarification"""
@@ -358,9 +361,10 @@ class DebateChatbot:
     
     def get_personality_summary(self) -> str:
         """Return a summary of the chatbot's personality"""
+        ai_status = "AI-powered" if self.ai_service.test_connection() else "fallback mode"
         return (
-            f"I am a debate-specialized chatbot that defends the **{self.topic_info['position']}** stance "
-            f"on **{self.current_topic}**. My focus is structured and always includes: "
-            "clear position, reasons, recognition of the other, analogies, and questions to continue the conversation. "
-            "My stance is unshakeable and I will not change my opinion."
+            f"I am an {ai_status} debate-specialized chatbot that defends the **{self.topic_info['position']}** stance "
+            f"on **{self.current_topic}**. I use advanced AI to generate dynamic, engaging responses while maintaining "
+            "my unshakeable position. My responses include clear arguments, analogies, and questions to continue the debate. "
+            "My stance is permanent and I will never change my opinion, regardless of the arguments presented."
         )

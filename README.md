@@ -1,6 +1,6 @@
-# Kopi Challenge - Persistent Debate Chatbot
+# Kopi Challenge - AI-Powered Persistent Debate Chatbot
 
-A chatbot API that maintains debates and always upholds the same stance, regardless of arguments presented. The bot is programmed to be consistent and never change its opinion.
+An AI-powered chatbot API that maintains debates and always upholds the same stance, regardless of arguments presented. The bot uses advanced AI (Ollama + Llama 3.1) to generate dynamic, engaging responses while maintaining its unshakeable position.
 
 ## 🚀 Quick Start
 
@@ -8,6 +8,7 @@ A chatbot API that maintains debates and always upholds the same stance, regardl
 - **Docker & Docker Compose** (for Docker installation)
 - **Python 3.11+** (for local installation)
 - **Git** (to clone the repository)
+- **Ollama** (for AI model - see installation below)
 
 ### Docker (Recommended)
 ```bash
@@ -26,12 +27,27 @@ make run
 git clone <repo-url>
 cd kopi-challenge
 
+# Install Ollama (macOS)
+brew install ollama
+ollama pull llama3.1
+
+# Or install Ollama (Linux)
+curl -fsSL https://ollama.ai/install.sh | sh
+ollama pull llama3.1
+
+# Start Ollama service
+brew services start ollama  # macOS
+# or: ollama serve  # Linux
+
+# Setup Python environment
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
-make install
+pip install -r requirements.txt
 
-# Start Redis (required)
+# Start Redis (optional - will use in-memory storage if not available)
 docker-compose up -d redis
+
+# Run the API
 python src/main.py
 ```
 
@@ -93,9 +109,31 @@ Default values work out of the box, but you can customize:
 ## 🏗️ Architecture
 
 - **FastAPI** - Modern Python web framework
-- **Redis** - Conversation storage with 7-day TTL
+- **Ollama + Llama 3.1** - AI-powered response generation
+- **Redis** - Conversation storage with 7-day TTL (fallback to in-memory)
 - **Docker** - Complete containerization
-- **Rule-based engine** - Consistent debate responses
+- **AI Prompt Engineering** - Dynamic prompts for consistent debate responses
+- **Fallback System** - Graceful degradation when AI service is unavailable
+
+## 🤖 AI Features
+
+### Dynamic Response Generation
+- **AI-Powered**: Uses Ollama with Llama 3.1 for intelligent, contextual responses
+- **Consistent Personality**: Advanced prompt engineering ensures the bot never changes its stance
+- **Engaging Debates**: Generates analogies, examples, and rhetorical questions
+- **Context Awareness**: Maintains conversation history for coherent responses
+
+### Prompt Engineering
+- **System Prompts**: Carefully crafted prompts that define the bot's stubborn personality
+- **Context Injection**: Includes conversation history and current topic information
+- **Response Formatting**: Structured prompts ensure consistent response format
+- **Fallback Handling**: Graceful degradation when AI service is unavailable
+
+### Performance Optimizations
+- **Response Time**: Optimized for 10-15 second response times
+- **Token Limits**: Balanced between quality and speed (150 tokens max)
+- **Connection Testing**: Automatic AI service health checks
+- **Error Handling**: Robust error handling with fallback responses
 
 ## 📝 License
 
