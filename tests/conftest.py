@@ -43,16 +43,13 @@ def mock_storage(mock_redis):
         }
         mock_storage_instance.delete_conversation.return_value = True
         
-        # Track deleted conversations
         deleted_conversations = set()
         
-        # Mock conversation_exists to return True for existing conversations, False for deleted ones
         def mock_conversation_exists(conv_id):
             return conv_id == "test-conversation-id" and conv_id not in deleted_conversations
         mock_storage_instance.conversation_exists.side_effect = mock_conversation_exists
         
-        # Mock get_conversation_history_limited to return different responses for different calls
-        call_count = [0]  # Use list to make it mutable in closure
+        call_count = [0]
         def mock_get_history_limited(conv_id):
             if conv_id == "test-conversation-id" and conv_id not in deleted_conversations:
                 call_count[0] += 1
@@ -71,7 +68,6 @@ def mock_storage(mock_redis):
             return []
         mock_storage_instance.get_conversation_history_limited.side_effect = mock_get_history_limited
         
-        # Mock get_conversation_meta to return None for invalid conversations
         def mock_get_conversation_meta(conv_id):
             if conv_id == "test-conversation-id" and conv_id not in deleted_conversations:
                 return {
@@ -83,7 +79,6 @@ def mock_storage(mock_redis):
             return None
         mock_storage_instance.get_conversation_meta.side_effect = mock_get_conversation_meta
         
-        # Mock get_conversation_history to return None for invalid conversations
         def mock_get_conversation_history(conv_id, limit=None):
             if conv_id == "test-conversation-id" and conv_id not in deleted_conversations:
                 return [
@@ -93,7 +88,6 @@ def mock_storage(mock_redis):
             return None
         mock_storage_instance.get_conversation_history.side_effect = mock_get_conversation_history
         
-        # Mock delete_conversation to actually mark conversations as deleted
         def mock_delete_conversation(conv_id):
             if conv_id == "test-conversation-id":
                 deleted_conversations.add(conv_id)

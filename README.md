@@ -1,140 +1,169 @@
-# Kopi Challenge - AI-Powered Persistent Debate Chatbot
+# Kopi Challenge - AI-Powered Debate Chatbot
 
-An AI-powered chatbot API that maintains debates and always upholds the same stance, regardless of arguments presented. The bot uses advanced AI (Ollama + Llama 3.1) to generate dynamic, engaging responses while maintaining its unshakeable position.
+An intelligent debate chatbot powered by Ollama and Llama 3.1 that maintains persistent conversations and generates dynamic, context-aware responses.
 
-## 🚀 Quick Start
+## Features
 
-### Prerequisites
-- **Docker & Docker Compose** (for Docker installation)
-- **Python 3.11+** (for local installation)
-- **Git** (to clone the repository)
-- **Ollama** (for AI model - see installation below)
+- **AI-Powered Responses**: Uses Ollama with Llama 3.1 for dynamic, intelligent debate responses
+- **Persistent Conversations**: Maintains conversation history with Redis or in-memory fallback
+- **Multiple Debate Topics**: 10 predefined debate topics with intelligent stance selection
+- **RESTful API**: FastAPI-based API with comprehensive endpoints
+- **Professional UI**: Clean web interface for interactive debates
 
-### Docker (Recommended)
+## Prerequisites
+
+- Python 3.11+
+- Ollama installed and running
+- Llama 3.1 model downloaded
+
+## Quick Start
+
+### 1. Install Ollama and Model
+
 ```bash
-git clone <repo-url>
-cd kopi-challenge
-make run
-```
-
-**Services available at:**
-- 🌐 **API**: http://localhost:8000
-- 📊 **Redis**: localhost:6379
-- 📚 **API Docs**: http://localhost:8000/docs
-
-### Local Installation
-```bash
-git clone <repo-url>
-cd kopi-challenge
-
-# Install Ollama (macOS)
+# macOS
 brew install ollama
 ollama pull llama3.1
+brew services start ollama
 
-# Or install Ollama (Linux)
+# Linux
 curl -fsSL https://ollama.ai/install.sh | sh
 ollama pull llama3.1
+ollama serve
+```
 
-# Start Ollama service
-brew services start ollama  # macOS
-# or: ollama serve  # Linux
+### 2. Setup Project
 
-# Setup Python environment
+```bash
+git clone <repository-url>
+cd kopi-challenge
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# Start Redis (optional - will use in-memory storage if not available)
-docker-compose up -d redis
-
-# Run the API
-python src/main.py
 ```
 
-## 📱 Usage
-
-### API Endpoints
-- **POST** `/chat` - Send messages and debate
-- **GET** `/chat/{id}` - Get conversation history
-- **GET** `/ui` - Optional web interface
-
-### How to Debate with the Bot
-
-1. **Start a new conversation** by sending a message without `conversation_id`
-2. **The bot will randomly select a topic** and take a stance
-3. **Continue debating** by sending messages with the same `conversation_id`
-4. **The bot will never change its opinion** - it's designed to be persistent
-
-### Example API Request
-```json
-{
-  "conversation_id": null,
-  "message": "Let's debate about pineapple on pizza!"
-}
-```
-
-### Testing Options
-
-**Option 1: Postman/curl (Recommended for API testing)**
-Test the endpoints directly with your preferred API client.
-
-**Option 2: Web Interface**
-Visit `http://localhost:8000/ui` for an interactive chat experience.
-
-## 🛠️ Development
+### 3. Configure the Application
 
 ```bash
-make test              # Run tests
-make logs              # Show logs
-make down              # Stop services
-make clean             # Remove containers
-make build             # Rebuild Docker image
-make restart           # Restart services
+# Quick setup with defaults
+python setup_config.py
+
+# Or customize configuration
+python setup_config.py
+# Choose option 2 for interactive setup
 ```
 
-## 🔧 Configuration
+### 4. Start the Server
 
-Copy `env.example` to `.env`:
 ```bash
-cp env.example .env
+# Using the configuration script (recommended)
+python start_server.py
+
+# Or manually with custom port
+PORT=8013 python src/main.py
 ```
 
-Default values work out of the box, but you can customize:
-- `PORT=8000`
-- `HOST=0.0.0.0`
-- `REDIS_URL=redis://localhost:6379/0`
-- `BOT_MAX_HISTORY_EXCHANGES=5`
-- `BOT_MAX_RESPONSE_TOKENS=256`
+### 5. Access Application
 
-## 🏗️ Architecture
+- **Web Interface**: http://localhost:8013/chat
+- **API Documentation**: http://localhost:8013/docs
+- **Health Check**: http://localhost:8013/health
 
-- **FastAPI** - Modern Python web framework
-- **Ollama + Llama 3.1** - AI-powered response generation
-- **Redis** - Conversation storage with 7-day TTL (fallback to in-memory)
-- **Docker** - Complete containerization
-- **AI Prompt Engineering** - Dynamic prompts for consistent debate responses
-- **Fallback System** - Graceful degradation when AI service is unavailable
+## API Endpoints
 
-## 🤖 AI Features
+- `POST /chat` - Start or continue a conversation
+- `GET /chat/{conversation_id}` - Get conversation history
+- `GET /personality` - Get bot personality and current topic
+- `GET /health` - Health check
+- `GET /stats` - System statistics
 
-### Dynamic Response Generation
-- **AI-Powered**: Uses Ollama with Llama 3.1 for intelligent, contextual responses
-- **Consistent Personality**: Advanced prompt engineering ensures the bot never changes its stance
-- **Engaging Debates**: Generates analogies, examples, and rhetorical questions
-- **Context Awareness**: Maintains conversation history for coherent responses
+## Testing
 
-### Prompt Engineering
-- **System Prompts**: Carefully crafted prompts that define the bot's stubborn personality
-- **Context Injection**: Includes conversation history and current topic information
-- **Response Formatting**: Structured prompts ensure consistent response format
-- **Fallback Handling**: Graceful degradation when AI service is unavailable
+```bash
+# Run all tests (recommended)
+python tests/run_all_tests.py
 
-### Performance Optimizations
-- **Response Time**: Optimized for 10-15 second response times
-- **Token Limits**: Balanced between quality and speed (150 tokens max)
-- **Connection Testing**: Automatic AI service health checks
-- **Error Handling**: Robust error handling with fallback responses
+# Run individual test suites
+python tests/test_comprehensive_system.py
+python tests/test_integration_scenarios.py
+python tests/test_load_performance.py
 
-## 📝 License
+# Run manual tests
+python tests/test_ai_manually.py
+python tests/test_api_manually.py
 
-MIT License - see [LICENSE](LICENSE) file.
+# Run demo
+python tests/demo_ai_integration.py
+
+# Run formal tests
+pytest tests/
+```
+
+## Architecture
+
+- **FastAPI**: Web framework and API layer
+- **Ollama + Llama 3.1**: AI model for response generation
+- **Redis**: Conversation storage (with in-memory fallback)
+- **AI Prompt Engineering**: Optimized prompts for debate personality
+
+## Configuration
+
+The application uses a centralized configuration system. All settings can be configured via environment variables or the `.env` file.
+
+### Configuration Options
+
+**Server Configuration:**
+- `HOST`: Server host (default: 0.0.0.0)
+- `PORT`: Server port (default: 8013)
+
+**AI Service Configuration:**
+- `AI_MODEL`: AI model name (default: llama3.1)
+- `AI_BASE_URL`: Ollama service URL (default: http://localhost:11434)
+- `AI_TIMEOUT`: AI request timeout in seconds (default: 30)
+- `AI_MAX_TOKENS`: Maximum tokens per AI response (default: 256)
+
+**Chatbot Configuration:**
+- `BOT_MAX_HISTORY_EXCHANGES`: Maximum conversation history (default: 5)
+- `BOT_MAX_RESPONSE_TOKENS`: Maximum response length (default: 256)
+
+**Storage Configuration:**
+- `REDIS_URL`: Redis connection string (default: redis://localhost:6379/0)
+- `STORAGE_TTL_DAYS`: Conversation storage TTL in days (default: 7)
+
+**Development Configuration:**
+- `DEBUG`: Debug mode (default: false)
+- `LOG_LEVEL`: Logging level (default: INFO)
+
+### Quick Configuration
+
+```bash
+# Use default configuration
+python setup_config.py
+
+# Customize configuration
+python setup_config.py
+# Choose option 2 for interactive setup
+```
+
+## Development
+
+The project uses a clean, modular architecture:
+
+**Source Code (`src/`)**:
+- `main.py`: FastAPI application and endpoints
+- `chat_logic.py`: Core chatbot logic and AI integration
+- `ai_service.py`: Ollama AI service wrapper
+- `storage.py`: Redis storage implementation
+- `memory_storage.py`: In-memory storage fallback
+- `models.py`: Pydantic data models
+
+**Testing (`tests/`)**:
+- `test_ai_integration.py`: Formal AI integration tests
+- `test_ai_manually.py`: Manual AI service tests
+- `test_api_manually.py`: Manual API endpoint tests
+- `demo_ai_integration.py`: AI integration demonstration
+- `conftest.py`: Test configuration and fixtures
+
+## License
+
+MIT License - see LICENSE file for details.

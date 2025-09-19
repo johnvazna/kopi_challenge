@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import uuid
@@ -50,7 +49,6 @@ class InMemoryChatStorage:
         
         self.conversations[conversation_id].append(message_data)
         
-        # Update metadata
         if conversation_id in self.conversation_meta:
             self.conversation_meta[conversation_id]["message_count"] += 1
             self.conversation_meta[conversation_id]["updated_at"] = datetime.now().isoformat()
@@ -72,7 +70,6 @@ class InMemoryChatStorage:
         if history is None:
             return None
         
-        # Return last N exchanges (user + bot pairs)
         max_messages = self.max_history_exchanges * 2  # user + bot pairs
         return history[-max_messages:] if len(history) > max_messages else history
     
@@ -83,6 +80,17 @@ class InMemoryChatStorage:
     def conversation_exists(self, conversation_id: str) -> bool:
         """Check if conversation exists"""
         return conversation_id in self.conversations
+    
+    def update_conversation_meta(self, conversation_id: str, updates: Dict[str, Any]) -> bool:
+        """Update conversation metadata"""
+        if conversation_id not in self.conversation_meta:
+            return False
+        
+        self.conversation_meta[conversation_id].update(updates)
+        self.conversation_meta[conversation_id]["updated_at"] = datetime.now().isoformat()
+        
+        logger.info(f"Updated conversation {conversation_id} metadata: {updates}")
+        return True
     
     def delete_conversation(self, conversation_id: str) -> bool:
         """Delete a conversation"""
@@ -111,5 +119,4 @@ class InMemoryChatStorage:
     
     def cleanup_expired_conversations(self):
         """Cleanup expired conversations (not applicable for in-memory storage)"""
-        # In-memory storage doesn't need cleanup as it's temporary
         logger.info("In-memory storage cleanup completed (no action needed)")
