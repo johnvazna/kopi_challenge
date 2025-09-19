@@ -13,12 +13,17 @@ createApp({
             currentConversationId: null,
             isLoading: false,
             conversationInfo: {},
-            savedConversations: []
+            savedConversations: [],
+            currentRequest: null
         }
     },
     
     mounted() {
-        this.loadConversationFromStorage();
+        // Clear any old localStorage data to ensure fresh start
+        this.clearOldStorageData();
+        
+        // Always start with a fresh conversation when opening the interface
+        this.startNewConversation();
         this.scrollToBottom();
     },
     
@@ -40,7 +45,13 @@ createApp({
             this.scrollToBottom();
             
             try {
-                const response = await fetch('/chat', {
+                // Cancel any pending request
+                if (this.currentRequest) {
+                    this.currentRequest.abort();
+                }
+                
+                // Create new request
+                this.currentRequest = fetch('/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -50,6 +61,9 @@ createApp({
                         message: userMessage.content
                     })
                 });
+                
+                const response = await this.currentRequest;
+                this.currentRequest = null;
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -84,6 +98,7 @@ createApp({
                 this.messages.push(errorMessage);
             } finally {
                 this.isLoading = false;
+                this.currentRequest = null;
                 this.scrollToBottom();
             }
         },
@@ -112,6 +127,7 @@ createApp({
         },
         
         startNewConversation() {
+            // Clear all current conversation data
             this.messages = [{
                 id: 1,
                 role: 'bot',
@@ -121,7 +137,21 @@ createApp({
             this.currentConversationId = null;
             this.conversationInfo = {};
             this.inputMessage = '';
+            this.isLoading = false;
+            
+            // Clear any pending requests
+            if (this.currentRequest) {
+                this.currentRequest.abort();
+                this.currentRequest = null;
+            }
+            
+            // Clean up old conversations to prevent memory buildup
+            this.cleanupOldConversations();
+            
+            // Force scroll to bottom
             this.scrollToBottom();
+            
+            console.log('New conversation started - all data cleared');
         },
         
         saveConversationToStorage() {
@@ -228,6 +258,39 @@ createApp({
                 
                 this.scrollToBottom();
             }
+        },
+        
+        cleanupOldConversations() {
+            // Keep only the last 10 conversations to prevent memory buildup
+            const maxConversations = 10;
+            const savedConversations = JSON.parse(localStorage.getItem('kopi_challenge_conversations') || '[]');
+            
+            if (savedConversations.length > maxConversations) {
+                // Remove oldest conversations
+                const conversationsToRemove = savedConversations.slice(0, savedConversations.length - maxConversations);
+                
+                conversationsToRemove.forEach(conv => {
+                    localStorage.removeItem(`kopi_challenge_conversation_${conv.id}`);
+                });
+                
+                // Update the saved conversations list
+                const remainingConversations = savedConversations.slice(-maxConversations);
+                localStorage.setItem('kopi_challenge_conversations', JSON.stringify(remainingConversations));
+                this.savedConversations = remainingConversations;
+                
+                console.log(`Cleaned up ${conversationsToRemove.length} old conversations`);
+            }
+        },
+        
+        clearOldStorageData() {
+            // Clear all old conversation data to ensure fresh start
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('kopi_challenge_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+            console.log('Cleared all old conversation data from localStorage');
         }
     }
 }).mount('#app');

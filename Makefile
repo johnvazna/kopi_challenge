@@ -7,30 +7,30 @@ help: ## List available commands
 install: ## Install dependencies
 	@echo "Installing dependencies..."
 	pip install -r requirements.txt
-	@echo "✅ Dependencies installed successfully"
+	@echo "Dependencies installed successfully"
 
 test: ## Run tests
 	@echo "Running tests..."
 	python -m pytest tests/ -v
-	@echo "✅ Tests completed"
+	@echo "Tests completed"
 
 run: ## Start API + Redis with Docker
 	@echo "Starting services with Docker Compose..."
 	docker-compose up -d
-	@echo "✅ Services started"
-	@echo "🌐 API available at: http://localhost:8000"
-	@echo "📊 Redis available at: localhost:6379"
+	@echo "Services started"
+	@echo "API available at: http://localhost:8000"
+	@echo "Redis available at: localhost:6379"
 
 down: ## Stop services
 	@echo "Stopping services..."
 	docker-compose down
-	@echo "✅ Services stopped"
+	@echo "Services stopped"
 
 clean: ## Stop and remove containers/volumes
 	@echo "Cleaning completely..."
 	docker-compose down -v --remove-orphans
 	docker system prune -f
-	@echo "✅ Containers and volumes removed"
+	@echo "Containers and volumes removed"
 
 logs: ## Show service logs
 	docker-compose logs -f
